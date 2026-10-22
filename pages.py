@@ -6,41 +6,60 @@ from helpers import retrieve_phone_code
 
 
 class UrbanRoutesPage:
-    # Localizadores corrigidos e mais robustos
+    # Localizadores
     FROM_FIELD = (By.ID, 'from')
     TO_FIELD = (By.ID, 'to')
 
-    # Alterado para aceitar "Pedir" de forma genérica (evita conflito de idioma/texto exato)
-    CALL_TAXI_BUTTON = (By.XPATH, '//button[contains(text(), "Pedir")]')
+    # Botão da tela de rota: "Chamar um táxi" (o "Pedir" é o botão final do pedido)
+    CALL_TAXI_BUTTON = (By.XPATH, '//button[contains(text(), "Chamar")]')
 
     COMFORT_TARIFF = (By.XPATH, '//div[@class="tcard-title" and text()="Comfort"]')
     PHONE_BUTTON = (By.XPATH, '//div[starts-with(@class, "np-button")]')
+    PHONE_TEXT = (By.CLASS_NAME, 'np-text')
+    ACTIVE_PLAN = (By.XPATH, '//div[@class="tcard active"]//div[@class="tcard-title"]')
     PHONE_INPUT = (By.ID, 'phone')
-    NEXT_BUTTON = (By.XPATH, '//button[text()="Próxima"]')
-    CODE_INPUT = (By.ID, 'code')
+    NEXT_BUTTON = (By.XPATH, '//button[contains(text(), "Próxim")]')
+    # O id "code" existe também no cartão: restringe à janela de telefone aberta
+    CODE_INPUT = (By.XPATH, '//div[@class="section active"]//input[@id="code"]')
     CONFIRM_CODE_BUTTON = (By.XPATH, '//button[text()="Confirmar"]')
 
     # Pagamento
     PAYMENT_METHOD_BUTTON = (By.XPATH, '//div[@class="pp-text" and text()="Método de pagamento"]')
     ADD_CARD_BUTTON = (By.XPATH, '//div[@class="pp-row subset" and text()="Adicionar cartão"]')
     CARD_NUMBER_INPUT = (By.ID, 'number')
-    CARD_CVV_INPUT = (By.XPATH, '//div[@class="card-input-wrapper"]//input[@id="code"]')
+    CARD_CVV_INPUT = (By.XPATH, '//div[@class="card-code-input"]//input[@id="code"]')
     ADD_CARD_SUBMIT_BUTTON = (By.XPATH, '//button[text()="Adicionar"]')
-    CLOSE_PAYMENT_MODAL = (By.XPATH, '//div[@class="payment-picker open"]//button[@class="close-button button"]')
+    CLOSE_PAYMENT_MODAL = (By.XPATH, '//div[@class="payment-picker open"]//button[@class="close-button section-close"]')
     PAYMENT_LABEL = (By.XPATH, '//div[@class="pp-value-text"]')
 
     # Comentário e extras
     COMMENT_INPUT = (By.ID, 'comment')
-    BLANKET_TOGGLE = (By.XPATH, '//div[@class="r-group"]//div[@class="switch"]')
-    BLANKET_CHECKBOX = (By.XPATH, '//div[@class="r-group"]//input[@type="checkbox"]')
+    BLANKET_TOGGLE = (
+        By.XPATH,
+        '//div[@class="r-sw-label" and text()="Cobertor e lenços"]'
+        '/following-sibling::div//span[@class="slider round"]'
+    )
+    BLANKET_CHECKBOX = (
+        By.XPATH,
+        '//div[@class="r-sw-label" and text()="Cobertor e lenços"]'
+        '/following-sibling::div//input[@type="checkbox"]'
+    )
 
     # Sorvetes
-    ICE_CREAM_PLUS_BUTTON = (By.XPATH, '//div[@class="r-group"]//div[text()="Sorvete"]/..//div[@class="counter-plus"]')
-    ICE_CREAM_COUNTER = (By.XPATH, '//div[@class="r-group"]//div[text()="Sorvete"]/..//div[@class="counter-value"]')
+    ICE_CREAM_PLUS_BUTTON = (
+        By.XPATH,
+        '//div[@class="r-counter-label" and text()="Sorvete"]'
+        '/following-sibling::div//div[@class="counter-plus"]'
+    )
+    ICE_CREAM_COUNTER = (
+        By.XPATH,
+        '//div[@class="r-counter-label" and text()="Sorvete"]'
+        '/following-sibling::div//div[@class="counter-value"]'
+    )
 
     # Botão final e Modal de busca
-    ORDER_BUTTON = (By.ID, 'smart-button')
-    CAR_SEARCH_MODAL = (By.XPATH, '//div[@class="order-body" and contains(., "Procurando carros")]')
+    ORDER_BUTTON = (By.CLASS_NAME, 'smart-button-wrapper')
+    CAR_SEARCH_MODAL = (By.CLASS_NAME, 'order-body')
 
     def __init__(self, driver):
         self.driver = driver
@@ -75,18 +94,12 @@ class UrbanRoutesPage:
 
     # 2. Selecionar o plano Comfort
     def select_comfort_plan(self):
-        comfort_element = self.wait.until(EC.element_to_be_clickable(self.COMFORT_TARIFF))
-        parent_element = comfort_element.find_element(By.XPATH, './..')
-        if "active" not in parent_element.get_attribute("class") and "active" not in comfort_element.get_attribute(
-                "class"):
-            comfort_element.click()
+        comfort_element = self.wait.until(EC.presence_of_element_located(self.COMFORT_TARIFF))
+        self.driver.execute_script("arguments[0].scrollIntoView();", comfort_element)
+        self.wait.until(EC.element_to_be_clickable(self.COMFORT_TARIFF)).click()
 
     def get_current_selected_plan(self):
-        comfort_element = self.wait.until(EC.visibility_of_element_located(self.COMFORT_TARIFF))
-        parent_element = comfort_element.find_element(By.XPATH, './..')
-        if "active" in comfort_element.get_attribute("class") or "active" in parent_element.get_attribute("class"):
-            return 'Comfort'
-        return ''
+        return self.wait.until(EC.visibility_of_element_located(self.ACTIVE_PLAN)).text
 
     # 3. Preencher o número de telefone
     def set_phone(self, phone_number):
@@ -100,8 +113,7 @@ class UrbanRoutesPage:
         self.wait.until(EC.element_to_be_clickable(self.CONFIRM_CODE_BUTTON)).click()
 
     def get_phone(self):
-        phone_btn = self.wait.until(EC.visibility_of_element_located(self.PHONE_BUTTON))
-        return phone_btn.text
+        return self.wait.until(EC.visibility_of_element_located(self.PHONE_TEXT)).text
 
     # 4. Adicionar cartão de crédito
     def set_card(self, card_number, card_cvv):
@@ -122,24 +134,29 @@ class UrbanRoutesPage:
 
     # 5. Escrever comentário para o motorista
     def set_message_for_driver(self, comment):
-        self.wait.until(EC.visibility_of_element_located(self.COMMENT_INPUT)).send_keys(comment)
+        comment_field = self.wait.until(EC.presence_of_element_located(self.COMMENT_INPUT))
+        self.driver.execute_script("arguments[0].scrollIntoView();", comment_field)
+        comment_field.send_keys(comment)
 
     def get_message_for_driver(self):
         return self.wait.until(EC.visibility_of_element_located(self.COMMENT_INPUT)).get_property('value')
 
     # 6. Pedir um cobertor e lenços
     def click_blanket_and_handkerchiefs(self):
+        toggle = self.wait.until(EC.presence_of_element_located(self.BLANKET_TOGGLE))
+        self.driver.execute_script("arguments[0].scrollIntoView();", toggle)
         self.wait.until(EC.element_to_be_clickable(self.BLANKET_TOGGLE)).click()
 
     def is_blanket_and_handkerchiefs_selected(self):
-        checkbox = self.driver.find_element(*self.BLANKET_CHECKBOX)
-        return checkbox.is_selected() or "checked" in checkbox.get_attribute("class")
+        checkbox = self.wait.until(EC.presence_of_element_located(self.BLANKET_CHECKBOX))
+        return checkbox.is_selected()
 
     # 7. Pedir 2 sorvetes
     def add_ice_cream(self, count=2):
-        plus_button = self.wait.until(EC.element_to_be_clickable(self.ICE_CREAM_PLUS_BUTTON))
+        plus_button = self.wait.until(EC.presence_of_element_located(self.ICE_CREAM_PLUS_BUTTON))
+        self.driver.execute_script("arguments[0].scrollIntoView();", plus_button)
         for _ in range(count):
-            plus_button.click()
+            self.wait.until(EC.element_to_be_clickable(self.ICE_CREAM_PLUS_BUTTON)).click()
 
     def get_ice_cream_amount(self):
         counter = self.wait.until(EC.visibility_of_element_located(self.ICE_CREAM_COUNTER))

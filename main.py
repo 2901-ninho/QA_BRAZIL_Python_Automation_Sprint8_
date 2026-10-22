@@ -5,6 +5,7 @@ import data
 import helpers
 from pages import UrbanRoutesPage
 
+
 class TestUrbanRoutes:
     driver = None
 
@@ -21,7 +22,8 @@ class TestUrbanRoutes:
         cls.driver.maximize_window()
 
     def setup_method(self):
-        self.driver.get('https://cnt-9532d4ed-d7f4-448f-92a7-87be5b0ad396.containerhub.tripleten-services.com?lng=pt')
+        # Roda antes de CADA teste. A URL vem do data.py
+        self.driver.get(data.URBAN_ROUTES_URL)
         self.routes_page = UrbanRoutesPage(self.driver)
 
     def _prepare_comfort_order(self):
