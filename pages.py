@@ -25,7 +25,7 @@ class UrbanRoutesPage:
 
     # Pagamento
     PAYMENT_METHOD_BUTTON = (By.XPATH, '//div[@class="pp-text" and text()="Método de pagamento"]')
-    ADD_CARD_BUTTON = (By.XPATH, '//div[@class="pp-row subset" and text()="Adicionar cartão"]')
+    ADD_CARD_BUTTON = (By.XPATH, '//*[@id="root"]/div/div[2]/div[2]/div[1]/div[2]/div[3]/div[2]')
     CARD_NUMBER_INPUT = (By.ID, 'number')
     CARD_CVV_INPUT = (By.XPATH, '//div[@class="card-code-input"]//input[@id="code"]')
     ADD_CARD_SUBMIT_BUTTON = (By.XPATH, '//button[text()="Adicionar"]')
@@ -36,13 +36,11 @@ class UrbanRoutesPage:
     COMMENT_INPUT = (By.ID, 'comment')
     BLANKET_TOGGLE = (
         By.XPATH,
-        '//div[@class="r-sw-label" and text()="Cobertor e lenços"]'
-        '/following-sibling::div//span[@class="slider round"]'
+        '//*[@id="root"]/div/div[3]/div[3]/div[2]/div[2]/div[4]/div[2]/div[1]/div/div[2]/div/span'
     )
     BLANKET_CHECKBOX = (
         By.XPATH,
-        '//div[@class="r-sw-label" and text()="Cobertor e lenços"]'
-        '/following-sibling::div//input[@type="checkbox"]'
+        '//*[@id="root"]/div/div[3]/div[3]/div[2]/div[2]/div[4]/div[2]/div[1]/div/div[2]/div/input'
     )
 
     # Sorvetes
